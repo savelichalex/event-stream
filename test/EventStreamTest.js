@@ -9,7 +9,11 @@ import {
 	filter,
 	fold,
 	merge,
-	zip } from '../src/index';
+	zip,
+	take
+} from '../src/index';
+
+import { range, seqCar } from '../src/lazySequence';
 
 describe('EventStream', () => {
     it('should map event stream', done => {
@@ -32,6 +36,11 @@ describe('EventStream', () => {
 	it('should map plain array', () => {
 		const arr = map([1,2,3], val => val * 2);
 		expect(arr).to.deep.equal([2,4,6]);
+	});
+
+	it('should map sequence', () => {
+		const seq = map(range(1, 5), val => val * 2);
+		expect(seqCar(take(seq, 1))).to.equal(2);
 	});
 
 	it('should filter event stream', done => {
@@ -58,6 +67,11 @@ describe('EventStream', () => {
 	it('should filter plain array', () => {
 		const arr = filter([1,2,3], val => val % 2 === 0);
 		expect(arr).to.deep.equal([2]);
+	});
+
+	it('should filter lazy sequence', () => {
+		const seq = filter(range(1, 5), val => val % 2 === 0);
+		expect(seqCar(take(seq, 1))).to.equal(2);
 	});
 
 	it('should fold event stream', done => {
