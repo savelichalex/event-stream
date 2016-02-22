@@ -9,7 +9,7 @@ import {
 	filter,
 	fold,
 	merge,
-	zip } from '../src/core';
+	zip } from '../src/index';
 
 describe('EventStream', () => {
     it('should map event stream', done => {
