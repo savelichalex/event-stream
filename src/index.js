@@ -12,6 +12,12 @@ import {
 	esZip
 } from './eventStream';
 
+import {
+	seqMap,
+	seqFilter,
+	seqTake
+} from './lazySequence';
+
 export function eventStream(obs) {
 	return new EventStream(obs);
 }
@@ -27,12 +33,19 @@ export const subscribe = byType([
 
 export const map = byType([
 	['[EventStream]', '[object Function]'], esMap,
-	['[object Array]', '[object Function]'], (arr, f) => arr.map(f)
+	['[object Array]', '[object Function]'], (arr, f) => arr.map(f),
+	['[Sequence]', '[object Function]'], seqMap
 ]);
 
 export const filter = byType([
 	['[EventStream]', '[object Function]'], esFilter,
-	['[object Array]', '[object Function]'], (arr, pred) => arr.filter(pred)
+	['[object Array]', '[object Function]'], (arr, pred) => arr.filter(pred),
+	['[Sequence]', '[object Function]'], seqFilter
+]);
+
+export const reduce = byType([
+	['[object Array]', '[object Function]'], (arr, f) => arr.reduce(f),
+	['[object Array]', '[object Function]', '*'], (arr, f, i) => arr.reduce(f, i)
 ]);
 
 export const fold = byType([
@@ -95,4 +108,8 @@ export const zip = byType([
 			}
 		}, []);
 	}
+]);
+
+export const take = byType([
+	['[Sequence]', '[object Number]'], seqTake
 ]);
