@@ -1,73 +1,127 @@
+'use strict';
+
 import { expect } from 'chai';
-import { EventStream } from '../src/core';
+import {
+	eventStream,
+	push,
+	subscribe,
+	map,
+	filter,
+	fold,
+	merge,
+	zip } from '../src/core';
 
 describe('EventStream', () => {
-    it('should map', done => {
-        const es = new EventStream();
+    it('should map event stream', done => {
+        const es = eventStream();
 
-        es.map(val => val * 2)
-            .subscribe(val => {
-	            expect(val).to.equal(4);
-	            done();
-            });
+	    subscribe(
+		    map(
+			    es,
+			    val => val * 2
+		    ),
+		    val => {
+			    expect(val).to.equal(4);
+			    done();
+		    }
+	    );
 
-	    es.push(2);
+	    push(es, 2);
     });
 
-	it('should filter', done => {
-		const es = new EventStream();
+	it('should map plain array', () => {
+		const arr = map([1,2,3], val => val * 2);
+		expect(arr).to.deep.equal([2,4,6]);
+	});
 
-		es.filter(val => val % 2 === 0)
-			.filter(val => val === 2)
-			.subscribe(val => {
+	it('should filter event stream', done => {
+		const es = eventStream();
+
+		subscribe(
+			filter(
+				filter(
+					es,
+					val => val % 2 === 0
+				),
+				val => val === 2
+			),
+			val => {
 				expect(val).to.equal(2);
 				done();
-			});
+			}
+		);
 
-		es.push(1);
-		es.push(2);
+		push(es, 1);
+		push(es, 2);
 	});
 
-	it('should fold', done => {
-		const es = new EventStream();
+	it('should filter plain array', () => {
+		const arr = filter([1,2,3], val => val % 2 === 0);
+		expect(arr).to.deep.equal([2]);
+	});
 
-		es.fold((prev, val) => prev + val)
-			.filter(val => val === 6)
-			.subscribe(val => {
+	it('should fold event stream', done => {
+		const es = eventStream();
+
+		subscribe(
+			filter(
+				fold(
+					es,
+					(prev, val) => prev + val
+				),
+				val => val === 6
+			),
+			val => {
 				expect(val).to.equal(6);
 				done();
-			});
+			}
+		);
 
-		es.push(1);
-		es.push(2);
-		es.push(3);
+		push(es, 1);
+		push(es, 2);
+		push(es, 3);
 	});
 
-	it('should merge', done => {
-		const es1 = new EventStream();
-		const es2 = new EventStream();
+	it('should fold plain array', () => {
+		const arr = fold([1,2,3], (prev, val) => prev + val);
+		expect(arr).to.deep.equal([1,3,6]);
+	});
+
+	it('should merge event streams', done => {
+		const es1 = eventStream();
+		const es2 = eventStream();
 
 		let count = 0;
-		es1.merge(es2)
-			.subscribe(() => {
+
+		subscribe(
+			merge(es1, es2),
+			() => {
 				count++;
 				if(count === 2) {
 					done();
 				}
-			});
+			}
+		);
 
-		es1.push(1);
-		es2.push(1);
+		push(es1, 1);
+		push(es2, 1);
 	});
 
-	it('should zip', done => {
-		const es1 = new EventStream();
-		const es2 = new EventStream();
+	it('should merge plain arrays', () => {
+		const arr = merge([1,2,3], [4,5,6]);
+		expect(arr).to.deep.equal([1,2,3,4,5,6]);
+	});
+
+	it('should zip event streams', done => {
+		const es1 = eventStream();
+		const es2 = eventStream();
 
 		let count = 0;
 
-		es1.zip(es2)
-			.subscribe(val => {
+
+		subscribe(
+			zip(es1, es2),
+			val => {
 				count++;
 				if(count === 2) {
 					expect(val).to.have.length(2);
@@ -75,13 +129,14 @@ describe('EventStream', () => {
 					expect(val[1]).to.equal(2);
 					done();
 				}
-			});
+			}
+		);
 
 		function addTo(es, time) {
 			let count = 0;
 			return function recur() {
 				if(count < 5) {
-					es.push(++count);
+					push(es, ++count);
 					setTimeout(recur, time);
 				}
 			}
@@ -89,5 +144,10 @@ describe('EventStream', () => {
 
 		setTimeout(addTo(es1, 50), 50);
 		setTimeout(addTo(es2, 100), 100);
+	});
+
+	it('should zip plain arrays', () => {
+		const arr = zip([1,2,3], [4,5,6]);
+		expect(arr).to.deep.equal([[1,4], [2,5], [3,6]]);
 	});
 });
