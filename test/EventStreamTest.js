@@ -2,26 +2,20 @@
 
 import { expect } from 'chai';
 import {
-	eventStream,
-	push,
-	subscribe,
-	map,
-	filter,
-	fold,
-	merge,
-	zip,
-	take
+	EventStream as es,
+	Sequence as s,
+	Array as a
 } from '../src/index';
 
-import { range, seqCar } from '../src/lazySequence';
+import { seqCar } from '../src/lazySequence';
 
 describe('EventStream', () => {
     it('should map event stream', done => {
-        const es = eventStream();
+        const es$ = es.EventStream();
 
-	    subscribe(
-		    map(
-			    es,
+	    es.subscribe(
+		    es.map(
+			    es$,
 			    val => val * 2
 		    ),
 		    val => {
@@ -30,26 +24,26 @@ describe('EventStream', () => {
 		    }
 	    );
 
-	    push(es, 2);
+	    es.push(es$, 2);
     });
 
 	it('should map plain array', () => {
-		const arr = map([1,2,3], val => val * 2);
+		const arr = a.map([1,2,3], val => val * 2);
 		expect(arr).to.deep.equal([2,4,6]);
 	});
 
 	it('should map sequence', () => {
-		const seq = map(range(1, 5), val => val * 2);
-		expect(seqCar(take(seq, 1))).to.equal(2);
+		const seq = s.map(s.range(1, 5), val => val * 2);
+		expect(seqCar(s.take(seq, 1))).to.equal(2);
 	});
 
 	it('should filter event stream', done => {
-		const es = eventStream();
+		const es$ = es.EventStream();
 
-		subscribe(
-			filter(
-				filter(
-					es,
+		es.subscribe(
+			es.filter(
+				es.filter(
+					es$,
 					val => val % 2 === 0
 				),
 				val => val === 2
@@ -60,27 +54,27 @@ describe('EventStream', () => {
 			}
 		);
 
-		push(es, 1);
-		push(es, 2);
+		es.push(es$, 1);
+		es.push(es$, 2);
 	});
 
 	it('should filter plain array', () => {
-		const arr = filter([1,2,3], val => val % 2 === 0);
+		const arr = a.filter([1,2,3], val => val % 2 === 0);
 		expect(arr).to.deep.equal([2]);
 	});
 
 	it('should filter lazy sequence', () => {
-		const seq = filter(range(1, 5), val => val % 2 === 0);
-		expect(seqCar(take(seq, 1))).to.equal(2);
+		const seq = s.filter(s.range(1, 5), val => val % 2 === 0);
+		expect(seqCar(s.take(seq, 1))).to.equal(2);
 	});
 
 	it('should fold event stream', done => {
-		const es = eventStream();
+		const es$ = es.EventStream();
 
-		subscribe(
-			filter(
-				fold(
-					es,
+		es.subscribe(
+			es.filter(
+				es.fold(
+					es$,
 					(prev, val) => prev + val
 				),
 				val => val === 6
@@ -91,24 +85,24 @@ describe('EventStream', () => {
 			}
 		);
 
-		push(es, 1);
-		push(es, 2);
-		push(es, 3);
+		es.push(es$, 1);
+		es.push(es$, 2);
+		es.push(es$, 3);
 	});
 
 	it('should fold plain array', () => {
-		const arr = fold([1,2,3], (prev, val) => prev + val);
+		const arr = a.fold([1,2,3], (prev, val) => prev + val);
 		expect(arr).to.deep.equal([1,3,6]);
 	});
 
 	it('should merge event streams', done => {
-		const es1 = eventStream();
-		const es2 = eventStream();
+		const es1 = es.EventStream();
+		const es2 = es.EventStream();
 
 		let count = 0;
 
-		subscribe(
-			merge(es1, es2),
+		es.subscribe(
+			es.merge(es1, es2),
 			() => {
 				count++;
 				if(count === 2) {
@@ -117,24 +111,24 @@ describe('EventStream', () => {
 			}
 		);
 
-		push(es1, 1);
-		push(es2, 1);
+		es.push(es1, 1);
+		es.push(es2, 1);
 	});
 
 	it('should merge plain arrays', () => {
-		const arr = merge([1,2,3], [4,5,6]);
+		const arr = a.merge([1,2,3], [4,5,6]);
 		expect(arr).to.deep.equal([1,2,3,4,5,6]);
 	});
 
 	it('should zip event streams', done => {
-		const es1 = eventStream();
-		const es2 = eventStream();
+		const es1 = es.EventStream();
+		const es2 = es.EventStream();
 
 		let count = 0;
 
 
-		subscribe(
-			zip(es1, es2),
+		es.subscribe(
+			es.zip(es1, es2),
 			val => {
 				count++;
 				if(count === 2) {
@@ -146,11 +140,11 @@ describe('EventStream', () => {
 			}
 		);
 
-		function addTo(es, time) {
+		function addTo(eventStream, time) {
 			let count = 0;
 			return function recur() {
 				if(count < 5) {
-					push(es, ++count);
+					es.push(eventStream, ++count);
 					setTimeout(recur, time);
 				}
 			}
@@ -161,7 +155,7 @@ describe('EventStream', () => {
 	});
 
 	it('should zip plain arrays', () => {
-		const arr = zip([1,2,3], [4,5,6]);
+		const arr = a.zip([1,2,3], [4,5,6]);
 		expect(arr).to.deep.equal([[1,4], [2,5], [3,6]]);
 	});
 });
