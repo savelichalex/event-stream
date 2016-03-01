@@ -8,7 +8,9 @@ import {
 	esFilter,
 	esFold,
 	esMerge,
-	esZip
+	esZip,
+	esFlatMap,
+	esThrow
 } from './eventStream';
 
 import {
@@ -31,12 +33,14 @@ import {
 export const EventStream = {
 	EventStream: eventStream,
 	push: esPush,
+	throwError: esThrow,
 	subscribe: esSubscribe,
 	map: esMap,
 	filter: esFilter,
 	fold: esFold,
 	merge: esMerge,
-	zip: esZip
+	zip: esZip,
+	flatMap: esFlatMap
 };
 
 export const Sequence = {

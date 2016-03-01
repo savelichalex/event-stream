@@ -22,7 +22,7 @@ class Observer {
 		} else {
 			this._subscribers.forEach((obj) => {
 				if (obj.next) {
-					setTimeout(obj.next.call(null, val), 0);
+					setTimeout(() => obj.next.call(null, val), 0);
 				}
 			});
 			return true;
@@ -301,6 +301,43 @@ export function esZip(es1, es2) {
 			}
 		},
 		err => newStream.throwError(err)
+	);
+
+	return newStream;
+}
+
+/**
+ * Combine streams. When get value from es calling
+ * function that return new stream, and values from
+ * this stream are pushed to returned stream
+ *
+ * ----1-------------2--------------3--------
+ *     |             |              |
+ * ----1--1--|  -----8--8--|   ----27---27--|   -   calculate square two times
+ *     |  |          |  |           |    |
+ *     |  |          |  |           |    |
+ *     v  v          v  v           v    v
+ * ----1--1----------8--8----------27---27---
+ *
+ * @param {EventStream} es
+ * @param {Function} f
+ * @returns {EventStream}
+ */
+export function esFlatMap(es, f) {
+	const newStream = new EventStream();
+
+	esSubscribe(
+		es,
+		val => {
+			const mb = f(val);
+
+			esSubscribe(
+				mb,
+				val => esPush(newStream, val),
+				err => esThrow(newStream, err)
+			)
+		},
+		err => esThrow(newStream, err)
 	);
 
 	return newStream;
